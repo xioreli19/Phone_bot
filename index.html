@@ -6,45 +6,68 @@
 <title>Кнопочный телефон</title>
 <script src="https://telegram.org/js/telegram-web-app.js"></script>
 <style>
-:root { --bg:#9bbc0f; --fg:#0f380f; }
+:root { --bg:#9bbc0f; --fg:#0f380f; --p1:#3a3f4a; --p2:#22262e; }
 * { box-sizing:border-box; -webkit-tap-highlight-color:transparent; user-select:none; }
 html,body { margin:0; background:#15171c; font-family:system-ui,sans-serif; }
 body { min-height:100vh; display:flex; justify-content:center; padding:10px 0; }
-.phone { width:min(100vw,330px); background:linear-gradient(#3a3f4a,#22262e); border-radius:34px 34px 44px 44px; padding:14px 16px 20px; box-shadow:0 0 0 3px #0c0d10, 0 10px 30px #000a; }
+body[data-phone="java"] { --p1:#9a5a22; --p2:#5a300f; }
+body[data-phone="plr"] { --p1:#2f7d6d; --p2:#154238; }
+body[data-phone="cam"] { --p1:#6a4a9a; --p2:#34204f; }
+body[data-phone="max"] { --p1:#c9a24a; --p2:#2b2416; }
+.phone { width:min(100vw,330px); background:linear-gradient(var(--p1),var(--p2)); border-radius:34px 34px 44px 44px; padding:14px 16px 20px; box-shadow:0 0 0 3px #0c0d10, 0 10px 30px #000a; }
 .speaker { width:60px; height:6px; border-radius:3px; background:#0c0d10; margin:0 auto 10px; }
 .screen { background:var(--bg); color:var(--fg); border:5px solid #0c0d10; border-radius:10px; font-family:"Courier New",monospace; font-weight:bold; font-size:14px; position:relative; box-shadow:inset 0 0 12px #0005; }
 .status { display:flex; justify-content:space-between; padding:3px 8px; border-bottom:2px solid var(--fg); font-size:12px; }
 .lcd { height:190px; overflow-y:auto; padding:4px 6px; scrollbar-width:none; position:relative; }
+.lcd.flash { background:var(--fg); color:var(--bg); }
 .lcd::-webkit-scrollbar { display:none; }
 .soft { display:flex; justify-content:space-between; padding:3px 8px; border-top:2px solid var(--fg); font-size:13px; min-height:24px; }
 .row { padding:3px 4px; border-bottom:1px dotted var(--fg); cursor:pointer; }
 .row.on { background:var(--fg); color:var(--bg); }
 .l2 { font-size:11px; font-weight:normal; opacity:.85; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
-.empty { text-align:center; margin-top:70px; }
-.grid { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; padding-top:6px; }
-.cell { text-align:center; padding:8px 0; border:2px solid var(--fg); border-radius:6px; cursor:pointer; }
+.empty { text-align:center; margin-top:60px; padding:0 6px; }
+.grid { display:grid; grid-template-columns:repeat(3,1fr); gap:4px; padding-top:2px; }
+.cell { text-align:center; padding:3px 0; border:2px solid var(--fg); border-radius:6px; cursor:pointer; }
 .cell.on { background:var(--fg); color:var(--bg); }
-.cell span { font-size:26px; display:block; filter:grayscale(1) contrast(1.4); }
-.cell small { font-size:10px; }
-.home { text-align:center; padding-top:18px; }
+.cell span { font-size:20px; display:block; filter:grayscale(1) contrast(1.4); line-height:24px; }
+.cell small { font-size:9px; }
+.wall { position:absolute; left:0; top:0; width:100%; height:100%; object-fit:cover; opacity:.5; image-rendering:pixelated; z-index:0; }
+.home { text-align:center; padding-top:10px; position:relative; z-index:1; }
 .clock { font-size:44px; letter-spacing:2px; }
 .date { font-size:13px; }
-.who { margin-top:14px; }
-.unread { margin-top:8px; }
+.who { margin-top:10px; }
+.bal { margin-top:4px; }
+.unread { margin-top:4px; min-height:18px; }
 .msg { padding:4px 0; border-bottom:1px dotted var(--fg); word-break:break-word; font-weight:normal; }
 .msg.mine { text-align:right; }
 .msg b { font-weight:bold; }
 .msg small { opacity:.7; }
-textarea { width:100%; height:140px; background:transparent; border:2px solid var(--fg); color:var(--fg); font:inherit; padding:4px; resize:none; outline:none; user-select:text; }
+.mt { min-height:130px; white-space:pre-wrap; word-break:break-word; border:2px solid var(--fg); padding:4px; font-size:15px; }
+.caret { animation:blink 1s steps(1) infinite; }
+@keyframes blink { 50% { opacity:0; } }
 .cnt { text-align:right; font-size:11px; }
 .score { font-size:12px; padding:0 2px 2px; }
-canvas { width:100%; display:block; border:2px solid var(--fg); image-rendering:pixelated; }
+canvas.game { width:100%; display:block; border:2px solid var(--fg); image-rendering:pixelated; }
 .ttt { display:grid; grid-template-columns:repeat(3,56px); gap:4px; justify-content:center; margin-top:6px; }
 .ttt div { height:46px; border:2px solid var(--fg); display:flex; align-items:center; justify-content:center; font-size:28px; cursor:pointer; }
 .ttt div.on { background:var(--fg); color:var(--bg); }
 .res { text-align:center; margin-top:6px; min-height:20px; }
 .big { font-size:34px; text-align:center; margin:10px 0; min-height:44px; letter-spacing:4px; }
-.toast { position:absolute; left:10px; right:10px; bottom:6px; background:var(--fg); color:var(--bg); text-align:center; padding:4px; border-radius:4px; font-size:12px; }
+.toast { position:absolute; left:10px; right:10px; bottom:30px; background:var(--fg); color:var(--bg); text-align:center; padding:4px; border-radius:4px; font-size:12px; z-index:5; }
+.view { height:150px; display:flex; align-items:center; justify-content:center; }
+.view canvas { height:100%; width:auto; max-width:100%; image-rendering:pixelated; border:2px solid var(--fg); }
+.cap { text-align:center; font-size:12px; margin-top:3px; white-space:nowrap; overflow:hidden; text-overflow:ellipsis; }
+.calh { text-align:center; margin-bottom:2px; }
+.cal { display:grid; grid-template-columns:repeat(7,1fr); text-align:center; font-size:13px; row-gap:2px; }
+.cal b { font-size:10px; }
+.cal span.on { background:var(--fg); color:var(--bg); border-radius:3px; }
+.calc { text-align:right; padding-top:8px; }
+.calc .expr { font-size:15px; min-height:20px; word-break:break-all; }
+.calc .num { font-size:30px; word-break:break-all; }
+.calc .hint { font-size:10px; font-weight:normal; text-align:left; margin-top:10px; }
+.txt { font-weight:normal; font-size:13px; line-height:1.35; }
+.txt p { margin:0 0 6px; }
+iframe.hg { width:100%; height:100%; border:0; background:#fff; display:block; }
 .keys { margin-top:14px; }
 .navrow { display:flex; align-items:center; justify-content:space-between; }
 button { font:inherit; border:0; cursor:pointer; color:#e8eaee; }
@@ -57,7 +80,8 @@ button { font:inherit; border:0; cursor:pointer; color:#e8eaee; }
 .call,.end { width:92px; height:34px; border-radius:17px; font-size:16px; box-shadow:0 3px 0 #1a1d23; }
 .call { background:#2f8f46; } .end { background:#b13a3a; }
 .numpad { display:grid; grid-template-columns:repeat(3,1fr); gap:6px; margin-top:6px; }
-.numpad button { height:40px; border-radius:10px; background:#4a505d; box-shadow:0 3px 0 #1a1d23; font-size:18px; }
+.numpad button { height:42px; border-radius:10px; background:#4a505d; box-shadow:0 3px 0 #1a1d23; font-size:17px; line-height:1.05; }
+.numpad button small { display:block; font-size:9px; opacity:.75; letter-spacing:1px; }
 button:active { transform:translateY(2px); box-shadow:none; }
 </style>
 </head>
@@ -84,10 +108,10 @@ button:active { transform:translateY(2px); box-shadow:none; }
       <button class="end" data-k="end">⏻</button>
     </div>
     <div class="numpad">
-      <button data-k="1">1</button><button data-k="2">2</button><button data-k="3">3</button>
-      <button data-k="4">4</button><button data-k="5">5</button><button data-k="6">6</button>
-      <button data-k="7">7</button><button data-k="8">8</button><button data-k="9">9</button>
-      <button data-k="*">*</button><button data-k="0">0</button><button data-k="#">#</button>
+      <button data-k="1">1<small>. , ?</small></button><button data-k="2">2<small>АБВГ</small></button><button data-k="3">3<small>ДЕЖЗ</small></button>
+      <button data-k="4">4<small>ИЙКЛ</small></button><button data-k="5">5<small>МНОП</small></button><button data-k="6">6<small>РСТУ</small></button>
+      <button data-k="7">7<small>ФХЦЧ</small></button><button data-k="8">8<small>ШЩЪЫ</small></button><button data-k="9">9<small>ЬЭЮЯ</small></button>
+      <button data-k="*">*<small>Аа</small></button><button data-k="0">0<small>пробел</small></button><button data-k="#">#<small>RU/EN</small></button>
     </div>
   </div>
 </div>
@@ -131,10 +155,20 @@ async function api(path, method = 'GET', body) {
   if (!r.ok) throw new Error(r.status);
   return r.json();
 }
+const blobCache = new Map();
+async function fetchBlob(id) {
+  if (blobCache.has(id)) return blobCache.get(id);
+  const r = await fetch('/api/file?id=' + id, {headers: {'X-Init-Data': initData}});
+  if (!r.ok) throw new Error(r.status);
+  const b = await r.blob();
+  if (blobCache.size >= 6) blobCache.delete(blobCache.keys().next().value);
+  blobCache.set(id, b);
+  return b;
+}
 function toast(t) {
-  const l = $('#lcd'); if (!l) return;
+  const sc = $('.screen'); if (!sc) return;
   const d = document.createElement('div'); d.className = 'toast'; d.textContent = t;
-  $('.screen').appendChild(d); setTimeout(() => d.remove(), 1500);
+  sc.appendChild(d); setTimeout(() => d.remove(), 1600);
 }
 function fmt(ts) {
   const d = new Date(ts * 1000), p = n => String(n).padStart(2, '0');
@@ -142,20 +176,64 @@ function fmt(ts) {
   return d.toDateString() === new Date().toDateString() ? hm : `${p(d.getDate())}.${p(d.getMonth() + 1)} ${hm}`;
 }
 
+// ---------- телефон пользователя
+let me = null;
+const FALLBACK = {id: 'std', name: 'Телефон', photoQ: {w: 64, h: 80, levels: 2}, videoQ: null, musicCut: 1200, wall: false, games: 0, mem: 3, used: 0};
+const P = () => (me && me.phone) || FALLBACK;
+async function loadMe() {
+  try { me = await api('/api/me'); } catch (e) { toast('Нет связи с сервером'); return; }
+  document.body.dataset.phone = me.phone.id;
+  if (cur === home) { $('#title').textContent = me.phone.name; paintHome(); }
+}
+
+// ---------- обработка картинок: плохое качество зависит от телефона
+function posterize(ctx, w, h, levels) {
+  const d = ctx.getImageData(0, 0, w, h), a = d.data, step = 255 / (levels - 1);
+  for (let i = 0; i < a.length; i += 4) {
+    a[i] = Math.round(a[i] / step) * step;
+    a[i + 1] = Math.round(a[i + 1] / step) * step;
+    a[i + 2] = Math.round(a[i + 2] / step) * step;
+  }
+  ctx.putImageData(d, 0, 0);
+}
+function drawLoRes(src, sw, sh, q, canvas) {
+  canvas.width = q.w; canvas.height = q.h;
+  const c = canvas.getContext('2d');
+  const s = Math.max(q.w / sw, q.h / sh), dw = sw * s, dh = sh * s;
+  c.drawImage(src, (q.w - dw) / 2, (q.h - dh) / 2, dw, dh);
+  posterize(c, q.w, q.h, q.levels);
+}
+async function loadImg(blob) {
+  const url = URL.createObjectURL(blob);
+  const img = new Image();
+  await new Promise((res, rej) => { img.onload = res; img.onerror = rej; img.src = url; });
+  URL.revokeObjectURL(url);
+  return img;
+}
+let audioCtx = null;
+function lofi(el, cut) {
+  audioCtx = audioCtx || new (window.AudioContext || window.webkitAudioContext)();
+  const src = audioCtx.createMediaElementSource(el);
+  const f = audioCtx.createBiquadFilter();
+  f.type = 'lowpass'; f.frequency.value = cut; f.Q.value = 1;
+  src.connect(f); f.connect(audioCtx.destination);
+}
+
 // ---------- навигация
-let stack = [], cur = null, me = null;
+let stack = [], cur = null;
 function show(s) { cur = s; if (s.onEnter) s.onEnter(); render(); }
 function push(s) { if (cur) { if (cur.onLeave) cur.onLeave(); stack.push(cur); } show(s); }
 function pop() { if (!stack.length) return; if (cur.onLeave) cur.onLeave(); show(stack.pop()); }
 function render() {
-  $('#title').textContent = cur.title || '';
-  const l = $('#lcd'); l.innerHTML = '';
+  $('#title').textContent = (typeof cur.title === 'function' ? cur.title() : cur.title) || '';
+  const l = $('#lcd'); l.className = 'lcd'; l.style.padding = ''; l.innerHTML = '';
   cur.draw(l);
   $('#sl').textContent = (cur.softL && cur.softL[0]) || '';
   $('#sr').textContent = (cur.softR && cur.softR[0]) || '';
 }
 function press(k) {
   buzz();
+  if (audioCtx && audioCtx.state === 'suspended') audioCtx.resume();
   if (k === 'sl') return cur.softL && cur.softL[1]();
   if (k === 'sr') return cur.softR && cur.softR[1]();
   if (k === 'end') { if (cur.onLeave) cur.onLeave(); stack = []; return show(home); }
@@ -177,6 +255,7 @@ function listScreen({title, items, softL, softR, empty}) {
       if (k === 'up' || k === '2') s.sel = Math.max(0, s.sel - 1);
       else if (k === 'down' || k === '8') s.sel = Math.min(s.items.length - 1, s.sel + 1);
       else if (k === 'ok') return act();
+      else if (s.extraKey) return s.extraKey(k);
       else return;
       render();
     },
@@ -186,6 +265,15 @@ function listScreen({title, items, softL, softR, empty}) {
   function act() { const it = s.items[s.sel]; if (it && it.fn) it.fn(); }
   return s;
 }
+// экран с текстом, прокручивается стрелками
+function textScreen(title, html) {
+  return {
+    title,
+    draw(el) { el.innerHTML = `<div class="txt">${html}</div>`; },
+    key(k) { const el = $('#lcd'); if (k === 'up' || k === '2') el.scrollTop -= 40; else if (k === 'down' || k === '8') el.scrollTop += 40; },
+    softL: null, softR: ['Назад', pop],
+  };
+}
 
 // ---------- главный экран
 function tick() {
@@ -194,19 +282,32 @@ function tick() {
   c.textContent = `${p(n.getHours())}:${p(n.getMinutes())}`;
   d.textContent = n.toLocaleDateString('ru-RU', {weekday: 'long', day: 'numeric', month: 'long'});
 }
-function paintUnread() {
-  const u = $('#un'); if (u && me) u.textContent = me.unread ? `✉ Новых СМС: ${me.unread}` : '';
+function paintHome() {
+  const w = $('#who'), b = $('#bal'), u = $('#un');
+  if (!me || !w) return;
+  w.textContent = me.name;
+  b.textContent = `💰 ${me.balance} ₽`;
+  u.textContent = me.unread ? `✉ Новых СМС: ${me.unread}` : '';
+  loadWall();
 }
-async function loadMe() {
-  try { me = await api('/api/me'); } catch (e) { toast('Нет связи с сервером'); return; }
-  if (cur === home) { const w = $('#who'); if (w) w.textContent = me.name; paintUnread(); }
+async function loadWall() {
+  try {
+    if (!me || !me.phone.wall) return;
+    const files = await api('/api/files?kind=wall');
+    const cv = $('#wallcv');
+    if (!files.length || !cv || cur !== home) return;
+    const blob = await fetchBlob(files[0].id);
+    const img = await loadImg(blob);
+    if (cur !== home || !$('#wallcv')) return;
+    drawLoRes(img, img.naturalWidth, img.naturalHeight, me.phone.photoQ, cv);
+  } catch (e) {}
 }
 const home = {
-  title: '', t: null,
+  title: () => (me ? me.phone.name : ''), t: null,
   draw(el) {
     clearInterval(home.t);
-    el.innerHTML = `<div class="home"><div class="clock" id="clk"></div><div class="date" id="dt"></div><div class="who" id="who">${esc(me ? me.name : '')}</div><div class="unread" id="un"></div></div>`;
-    tick(); paintUnread(); home.t = setInterval(tick, 1000);
+    el.innerHTML = `<canvas class="wall" id="wallcv" width="1" height="1"></canvas><div class="home"><div class="clock" id="clk"></div><div class="date" id="dt"></div><div class="who" id="who"></div><div class="bal" id="bal"></div><div class="unread" id="un"></div></div>`;
+    tick(); paintHome(); home.t = setInterval(tick, 1000);
   },
   onEnter() { loadMe(); },
   onLeave() { clearInterval(home.t); },
@@ -217,9 +318,14 @@ const home = {
 
 // ---------- меню
 const MENU = [
-  ['✉️', 'Сообщения', () => push(inbox())],
+  ['✉️', 'СМС', () => push(inbox())],
   ['🎮', 'Игры', () => push(gamesList())],
   ['👥', 'Контакты', () => push(contacts())],
+  ['🎵', 'Музыка', () => push(musicApp())],
+  ['🖼', 'Галерея', () => push(gallery())],
+  ['📅', 'Календарь', () => push(calendarApp())],
+  ['🧮', 'Калькулятор', () => push(calcApp())],
+  ['ℹ️', 'ГИД', () => push(guide())],
   ['🏆', 'Рекорды', () => push(records())],
   ['⚙️', 'Настройки', () => push(settingsScr())],
 ];
@@ -229,6 +335,7 @@ const menu = {
     el.innerHTML = '<div class="grid">' + MENU.map((m, i) =>
       `<div class="cell${i === menu.sel ? ' on' : ''}" data-i="${i}"><span>${m[0]}</span><small>${m[1]}</small></div>`).join('') + '</div>';
     el.querySelectorAll('.cell').forEach(c => c.onclick = () => { menu.sel = +c.dataset.i; MENU[menu.sel][2](); });
+    const on = el.querySelector('.cell.on'); if (on) on.scrollIntoView({block: 'nearest'});
   },
   key(k) {
     const n = MENU.length;
@@ -238,6 +345,7 @@ const menu = {
     else if (k === 'down') menu.sel = Math.min(n - 1, menu.sel + 3);
     else if (k === 'ok') return MENU[menu.sel][2]();
     else if (/^[1-9]$/.test(k) && MENU[k - 1]) return MENU[k - 1][2]();
+    else if (k === '0') return MENU[9][2]();
     else return;
     render();
   },
@@ -245,9 +353,48 @@ const menu = {
   softR: ['Назад', pop],
 };
 
+// ---------- ввод текста как на кнопочном: многократное нажатие
+function makeInput(max, onTick) {
+  const MAP = {
+    ru: {'1': '.,?!-1@', '2': 'абвг2', '3': 'дежз3', '4': 'ийкл4', '5': 'мноп5', '6': 'рсту6', '7': 'фхцч7', '8': 'шщъы8', '9': 'ьэюя9', '0': ' 0'},
+    en: {'1': '.,?!-1@', '2': 'abc2', '3': 'def3', '4': 'ghi4', '5': 'jkl5', '6': 'mno6', '7': 'pqrs7', '8': 'tuv8', '9': 'wxyz9', '0': ' 0'},
+  };
+  const st = {text: '', mode: 'ru', caps: false, capNext: true, pk: null, pi: 0, up: false, t: null};
+  const isLetter = c => /[a-zа-яё]/i.test(c);
+  const out = c => (isLetter(c) && st.up) ? c.toUpperCase() : c;
+  const commit = () => { clearTimeout(st.t); st.pk = null; };
+  const arm = () => { clearTimeout(st.t); st.t = setTimeout(() => { st.pk = null; if (onTick) onTick(); }, 900); };
+  function after(c) {
+    if (isLetter(c)) st.capNext = false;
+    else if (c === ' ' && /[.!?]\s$/.test(st.text)) st.capNext = true;
+  }
+  st.add = ch => { commit(); if (st.text.length >= max) return; st.text += ch; after(ch); };
+  st.back = () => { commit(); st.text = st.text.slice(0, -1); if (!st.text) st.capNext = true; };
+  st.stop = () => clearTimeout(st.t);
+  st.press = k => {
+    if (k === '#') { commit(); st.mode = st.mode === 'ru' ? 'en' : st.mode === 'en' ? 'num' : 'ru'; return; }
+    if (k === '*') { commit(); st.caps = !st.caps; return; }
+    if (!/^[0-9]$/.test(k)) return;
+    if (st.mode === 'num') { st.add(k); return; }
+    const chars = MAP[st.mode][k];
+    if (st.pk === k && st.text.length) {
+      st.pi = (st.pi + 1) % chars.length;
+      st.text = st.text.slice(0, -1) + out(chars[st.pi]);
+      arm(); return;
+    }
+    commit();
+    if (st.text.length >= max) return;
+    st.pk = k; st.pi = 0; st.up = st.caps || st.capNext;
+    const c = chars[0];
+    st.text += out(c); after(c); arm();
+  };
+  st.label = () => (st.mode === 'num' ? '123' : st.mode.toUpperCase() + (st.caps ? ' ABC' : ' Аа'));
+  return st;
+}
+
 // ---------- сообщения
 function inbox() {
-  const s = listScreen({title: 'Сообщения', items: [], empty: 'Нет сообщений', softL: ['Новое', () => push(contacts())]});
+  const s = listScreen({title: 'СМС', items: [], empty: 'Нет сообщений', softL: ['Новое', () => push(contacts())]});
   s.onEnter = async () => {
     try {
       const r = await api('/api/inbox');
@@ -284,23 +431,25 @@ function thread(u) {
   return s;
 }
 function compose(u) {
+  const inp = makeInput(500, () => { if (cur === s) render(); });
+  async function send() {
+    const t = inp.text.trim(); if (!t || s.sending) return;
+    s.sending = true;
+    try { await api('/api/send', 'POST', {to: u.id, text: t}); pop(); toast('Отправлено ✓'); }
+    catch (e) { toast('Не отправлено'); }
+    s.sending = false;
+  }
   const s = {
-    title: 'Кому: ' + u.name.slice(0, 10), text: '', sending: false,
+    title: 'Кому: ' + u.name.slice(0, 10), sending: false,
     draw(el) {
-      el.innerHTML = '<textarea id="ta" maxlength="500" placeholder="Текст СМС…"></textarea><div class="cnt" id="cnt"></div>';
-      const ta = $('#ta'); ta.value = s.text;
-      const upd = () => { s.text = ta.value; $('#cnt').textContent = ta.value.length + '/500'; };
-      ta.oninput = upd; upd();
-      setTimeout(() => ta.focus(), 50);
+      el.innerHTML = `<div class="mt">${esc(inp.text)}<span class="caret">▌</span></div><div class="cnt">${inp.label()} · ${inp.text.length}/500 · OK — отправить</div>`;
+      el.scrollTop = el.scrollHeight;
     },
-    softL: ['Отпр.', async () => {
-      const t = s.text.trim(); if (!t || s.sending) return;
-      s.sending = true;
-      try { await api('/api/send', 'POST', {to: u.id, text: t}); pop(); toast('Отправлено ✓'); }
-      catch (e) { toast('Не отправлено'); }
-      s.sending = false;
-    }],
-    softR: ['Назад', pop],
+    key(k) { if (k === 'left') inp.back(); else if (k === 'ok') return send(); else inp.press(k); render(); },
+    typeChar(ch) { inp.add(ch); render(); },
+    onLeave() { inp.stop(); },
+    softL: ['Отпр.', send],
+    get softR() { return [inp.text ? 'Стереть' : 'Назад', () => { if (inp.text) { inp.back(); render(); } else pop(); }]; },
   };
   return s;
 }
@@ -309,7 +458,7 @@ function contacts() {
   s.onEnter = async () => {
     try {
       const r = await api('/api/contacts');
-      s.items = r.map(c => ({label: c.name, sub: c.username ? '@' + c.username : '', fn: () => push(thread({id: c.id, name: c.name}))}));
+      s.items = r.map(c => ({label: c.name, sub: c.number, fn: () => push(thread({id: c.id, name: c.name}))}));
       s.sel = Math.min(s.sel, Math.max(0, s.items.length - 1));
       if (cur === s) render();
     } catch (e) { toast('Ошибка сети'); }
@@ -317,13 +466,69 @@ function contacts() {
   return s;
 }
 
+// ---------- удаление файла с подтверждением (нажать # дважды)
+function armDelete(s, getFile, after) {
+  let armed = null;
+  return async k => {
+    if (k !== '#') return;
+    const f = getFile(); if (!f) return;
+    if (armed !== f.id) { armed = f.id; toast('Ещё раз # — удалить'); return; }
+    armed = null;
+    try { await api('/api/file/delete', 'POST', {id: f.id}); blobCache.delete(f.id); toast('Удалено'); after(); }
+    catch (e) { toast('Не удалось'); }
+  };
+}
+
 // ---------- игры
 function gamesList() {
-  return listScreen({title: 'Игры', items: [
+  const base = [
     {label: '🐍 Змейка', fn: () => push(snake())},
     {label: '❌ Крестики-нолики', fn: () => push(ttt())},
     {label: '🔢 Угадай число', fn: () => push(guess())},
-  ]});
+    {label: '🧱 Арканоид', fn: () => push(brick())},
+    {label: '⚡ Реакция', fn: () => push(reaction())},
+  ];
+  const s = listScreen({title: 'Игры', items: base});
+  let games = [];
+  const hintOn = {label: '➕ Своя игра', sub: 'как добавить', fn: () => push(textScreen('Своя игра',
+    '<p>Отправьте боту в чате файл <b>.html</b> с игрой, она появится здесь.</p><p>Управление: стрелки и OK приходят в игру как клавиши ArrowUp/Down/Left/Right и Enter, цифры как цифры.</p><p>Удалить игру: выделите её и дважды нажмите #.</p>')) };
+  const hintOff = {label: '🔒 Свои игры', sub: 'нужен Java-фон', fn: () => push(textScreen('Свои игры',
+    '<p>Свои HTML-игры можно загружать на телефонах <b>Java-фон</b> и <b>Мультимедиа</b>. Купить их можно в магазине бота.</p>')) };
+  s.onEnter = async () => {
+    try {
+      games = await api('/api/files?kind=game');
+      s.items = [...base, ...games.map(f => ({label: '🎮 ' + f.name, sub: 'своя игра', fn: () => push(htmlGame(f))})), P().games ? hintOn : hintOff];
+      if (cur === s) render();
+    } catch (e) {}
+  };
+  s.extraKey = armDelete(s, () => games[s.sel - base.length], () => s.onEnter());
+  return s;
+}
+
+const GAME_SHIM = '<script>addEventListener("message",function(e){var m={up:"ArrowUp",down:"ArrowDown",left:"ArrowLeft",right:"ArrowRight",ok:"Enter"};var k=e.data&&e.data.phoneKey;if(!k)return;var key=m[k]||k;function f(t){var ev=new KeyboardEvent(t,{key:key,code:key,bubbles:true});(document.activeElement||document.body).dispatchEvent(ev)}f("keydown");setTimeout(function(){f("keyup")},90)});<\/script>';
+function htmlGame(f) {
+  let frame = null;
+  const s = {
+    title: f.name.slice(0, 14),
+    draw(el) {
+      el.style.padding = '0';
+      el.innerHTML = '<div class="empty">Загрузка…</div>';
+      (async () => {
+        try {
+          const html = await (await fetchBlob(f.id)).text();
+          if (cur !== s) return;
+          frame = document.createElement('iframe');
+          frame.className = 'hg';
+          frame.setAttribute('sandbox', 'allow-scripts');
+          frame.srcdoc = GAME_SHIM + html;
+          el.innerHTML = ''; el.appendChild(frame);
+        } catch (e) { el.innerHTML = '<div class="empty">Не удалось загрузить игру</div>'; }
+      })();
+    },
+    key(k) { if (frame && frame.contentWindow) frame.contentWindow.postMessage({phoneKey: k}, '*'); },
+    softL: null, softR: ['Назад', pop],
+  };
+  return s;
 }
 
 function snake() {
@@ -366,7 +571,7 @@ function snake() {
   const s = {
     title: 'Змейка',
     draw(el) {
-      el.innerHTML = `<div class="score">Счёт: <span id="sc">0</span></div><canvas id="cv" width="${W * C}" height="${H * C}"></canvas>`;
+      el.innerHTML = `<div class="score">Счёт: <span id="sc">0</span></div><canvas class="game" id="cv" width="${W * C}" height="${H * C}"></canvas>`;
       paint();
     },
     onEnter() { if (!sn) reset(); clearInterval(timer); timer = setInterval(step, 150); },
@@ -457,14 +662,307 @@ function guess() {
   };
 }
 
+function brick() {
+  const W = 240, H = 150;
+  let paddle, bx, by, vx, vy, bricks, score, lives, level, over, timer;
+  const color = () => getComputedStyle(document.documentElement).getPropertyValue('--fg');
+  function build() { bricks = []; for (let r = 0; r < 4; r++) for (let c = 0; c < 10; c++) bricks.push({x: c * 24 + 2, y: 14 + r * 10, alive: true}); }
+  function serve() { const sp = 2.2 + level * 0.3; bx = W / 2; by = H - 30; vx = sp * 0.8 * (Math.random() < 0.5 ? -1 : 1); vy = -sp; }
+  function reset() { paddle = 100; score = 0; lives = 3; level = 1; over = false; build(); serve(); }
+  function paint() {
+    const cv = $('#bcv'); if (!cv) return;
+    const c = cv.getContext('2d'), fg = color();
+    c.clearRect(0, 0, W, H); c.fillStyle = fg;
+    bricks.forEach(b => { if (b.alive) c.fillRect(b.x, b.y, 20, 8); });
+    c.fillRect(paddle, H - 8, 40, 5);
+    c.beginPath(); c.arc(bx, by, 3, 0, 7); c.fill();
+    const sc = $('#bsc'); if (sc) sc.textContent = `Счёт: ${score}  Жизни: ${lives}`;
+    if (over) { c.font = 'bold 18px monospace'; c.textAlign = 'center'; c.fillText('КОНЕЦ ИГРЫ', W / 2, H / 2 + 20); }
+  }
+  function step() {
+    if (over) return;
+    bx += vx; by += vy;
+    if (bx < 3 || bx > W - 3) vx = -vx;
+    if (by < 3) vy = Math.abs(vy);
+    if (vy > 0 && by >= H - 11 && by <= H - 4 && bx >= paddle - 2 && bx <= paddle + 42) {
+      vy = -Math.abs(vy); vx += (bx - (paddle + 20)) / 18; vx = Math.max(-4, Math.min(4, vx));
+    }
+    if (by > H) {
+      lives--;
+      if (lives <= 0) { over = true; buzz(); if (score > 0) api('/api/score', 'POST', {game: 'brick', score}).catch(() => {}); }
+      else serve();
+    }
+    for (const b of bricks) {
+      if (b.alive && bx >= b.x && bx <= b.x + 20 && by >= b.y && by <= b.y + 8) { b.alive = false; vy = -vy; score++; break; }
+    }
+    if (bricks.every(b => !b.alive)) { level++; build(); serve(); }
+    paint();
+  }
+  const s = {
+    title: 'Арканоид',
+    draw(el) {
+      el.innerHTML = `<div class="score" id="bsc"></div><canvas class="game" id="bcv" width="${W}" height="${H}"></canvas>`;
+      $('#bcv').onclick = ev => { const r = ev.target.getBoundingClientRect(); paddle = Math.max(0, Math.min(W - 40, (ev.clientX - r.left) / r.width * W - 20)); };
+      paint();
+    },
+    onEnter() { if (!bricks) reset(); clearInterval(timer); timer = setInterval(step, 30); },
+    onLeave() { clearInterval(timer); },
+    key(k) {
+      if (k === 'left' || k === '4') paddle = Math.max(0, paddle - 18);
+      else if (k === 'right' || k === '6') paddle = Math.min(W - 40, paddle + 18);
+      else if (k === 'ok' && over) { reset(); paint(); }
+    },
+    softL: ['Заново', () => { reset(); paint(); }],
+    softR: ['Назад', pop],
+  };
+  return s;
+}
+
+function reaction() {
+  let state = 'idle', t0 = 0, timer = null, msg = 'Нажмите OK, чтобы начать', best = null;
+  function go() {
+    if (state === 'idle') {
+      state = 'wait'; msg = 'Ждите…';
+      timer = setTimeout(() => { state = 'go'; t0 = performance.now(); msg = 'ЖМИТЕ OK!'; render(); }, 1000 + Math.random() * 3000);
+    } else if (state === 'wait') { clearTimeout(timer); state = 'idle'; msg = 'Рано! OK — заново'; }
+    else if (state === 'go') {
+      const ms = Math.round(performance.now() - t0);
+      best = best === null ? ms : Math.min(best, ms);
+      msg = `${ms} мс. OK — ещё раз`; state = 'idle';
+    }
+    render();
+  }
+  return {
+    title: 'Реакция',
+    draw(el) {
+      if (state === 'go') el.classList.add('flash');
+      el.innerHTML = `<div class="big" style="font-size:22px;margin-top:40px;min-height:60px;letter-spacing:0">${esc(msg)}</div><div class="res">${best !== null ? 'Лучший: ' + best + ' мс' : ''}</div>`;
+    },
+    key(k) { if (k === 'ok') go(); },
+    onLeave() { clearTimeout(timer); },
+    softL: ['Старт', go], softR: ['Назад', pop],
+  };
+}
+
+// ---------- музыка
+function musicApp() {
+  let audio = null, playing = -1, files = [];
+  const s = listScreen({title: 'Музыка', items: [], empty: 'Нет музыки. Отправьте mp3 боту в чате.'});
+  function stop() { if (audio) { audio.pause(); URL.revokeObjectURL(audio.src); audio = null; } playing = -1; }
+  async function play(i) {
+    if (playing === i && audio) { if (audio.paused) audio.play(); else audio.pause(); build(); render(); return; }
+    stop();
+    try {
+      const blob = await fetchBlob(files[i].id);
+      audio = new Audio(URL.createObjectURL(blob));
+      try { lofi(audio, P().musicCut); } catch (e) {}
+      playing = i;
+      audio.onended = () => { if (files.length > 1 && playing >= 0) { const n = (playing + 1) % files.length; stop(); play(n); } else { stop(); build(); render(); } };
+      audio.onpause = () => { build(); if (cur === s) render(); };
+      audio.onplay = () => { build(); if (cur === s) render(); };
+      await audio.play();
+    } catch (e) { stop(); toast('Не удалось играть'); }
+    build(); if (cur === s) render();
+  }
+  function build() {
+    s.items = files.map((f, i) => ({
+      label: (playing === i ? (audio && !audio.paused ? '▶ ' : '❚❚ ') : '♪ ') + f.name,
+      sub: 'звук: ' + (P().musicCut <= 1200 ? 'как из трубки' : P().musicCut <= 2500 ? 'глуховатый' : 'чуть почище'),
+      fn: () => play(i),
+    }));
+  }
+  s.onEnter = async () => {
+    try { files = await api('/api/files?kind=music'); build(); s.sel = Math.min(s.sel, Math.max(0, files.length - 1)); if (cur === s) render(); }
+    catch (e) { toast('Ошибка сети'); }
+  };
+  s.onLeave = stop;
+  s.extraKey = armDelete(s, () => files[s.sel], () => { stop(); s.onEnter(); });
+  s.softL = ['Играть', () => { if (files[s.sel]) play(s.sel); }];
+  return s;
+}
+
+// ---------- галерея
+const KIND_RU = {photo: 'фото', wall: 'обои', video: 'видео', music: 'музыка', game: 'игра'};
+function gallery() {
+  const s = listScreen({title: 'Галерея', items: [], empty: 'Пусто. Отправьте фото боту в чате.'});
+  s.onEnter = async () => {
+    try {
+      const f = await api('/api/files?kind=photo,wall,video');
+      s.items = f.map((x, i) => ({label: (x.kind === 'video' ? '🎬 ' : x.kind === 'wall' ? '🌄 ' : '🖼 ') + x.name, sub: KIND_RU[x.kind], fn: () => push(viewer(f, i))}));
+      s.sel = Math.min(s.sel, Math.max(0, f.length - 1));
+      if (cur === s) render();
+    } catch (e) { toast('Ошибка сети'); }
+  };
+  return s;
+}
+function viewer(list, idx) {
+  const s = {
+    title: 'Просмотр', idx, raf: null, vid: null, armed: false,
+    stopMedia() {
+      if (s.raf) cancelAnimationFrame(s.raf); s.raf = null;
+      if (s.vid) { s.vid.pause(); URL.revokeObjectURL(s.vid.src); s.vid = null; }
+    },
+    draw(el) {
+      const f = list[s.idx];
+      el.innerHTML = `<div class="view"><canvas id="vc" width="1" height="1"></canvas></div><div class="cap">${esc(f.name)} · ${s.idx + 1}/${list.length}</div>`;
+      s.show();
+    },
+    async show() {
+      s.stopMedia();
+      const f = list[s.idx], cv = $('#vc');
+      try {
+        const blob = await fetchBlob(f.id);
+        if (cur !== s || list[s.idx] !== f || !$('#vc')) return;
+        if (f.kind === 'video') {
+          const q = P().videoQ || {w: 64, h: 48, fps: 8, levels: 2};
+          const v = document.createElement('video');
+          v.src = URL.createObjectURL(blob); v.loop = true; v.playsInline = true;
+          s.vid = v;
+          try { lofi(v, P().musicCut); } catch (e) {}
+          v.play().catch(() => {});
+          let last = 0;
+          const loop = t => {
+            if (s.vid !== v) return;
+            if (t - last >= 1000 / q.fps && v.videoWidth) { drawLoRes(v, v.videoWidth, v.videoHeight, q, cv); last = t; }
+            s.raf = requestAnimationFrame(loop);
+          };
+          s.raf = requestAnimationFrame(loop);
+        } else {
+          const img = await loadImg(blob);
+          if (cur !== s || !$('#vc')) return;
+          drawLoRes(img, img.naturalWidth, img.naturalHeight, P().photoQ, cv);
+        }
+      } catch (e) { toast('Не удалось открыть'); }
+    },
+    key(k) {
+      if (k === 'left' || k === '4') { s.idx = (s.idx + list.length - 1) % list.length; s.armed = false; render(); }
+      else if (k === 'right' || k === '6') { s.idx = (s.idx + 1) % list.length; s.armed = false; render(); }
+    },
+    onLeave() { s.stopMedia(); },
+    get softL() {
+      return [s.armed ? 'Точно?' : 'Удалить', async () => {
+        if (!s.armed) { s.armed = true; render(); return; }
+        try { await api('/api/file/delete', 'POST', {id: list[s.idx].id}); blobCache.delete(list[s.idx].id); toast('Удалено'); pop(); }
+        catch (e) { toast('Не удалось'); }
+      }];
+    },
+    softR: ['Назад', pop],
+  };
+  return s;
+}
+
+// ---------- календарь
+function calendarApp() {
+  const t = new Date();
+  let y = t.getFullYear(), m = t.getMonth();
+  const MN = ['Январь','Февраль','Март','Апрель','Май','Июнь','Июль','Август','Сентябрь','Октябрь','Ноябрь','Декабрь'];
+  const s = {
+    title: 'Календарь',
+    draw(el) {
+      const off = (new Date(y, m, 1).getDay() + 6) % 7, days = new Date(y, m + 1, 0).getDate();
+      const now = new Date();
+      let h = `<div class="calh">◀ ${MN[m]} ${y} ▶</div><div class="cal">` + ['Пн','Вт','Ср','Чт','Пт','Сб','Вс'].map(d => `<b>${d}</b>`).join('');
+      for (let i = 0; i < off; i++) h += '<i></i>';
+      for (let d = 1; d <= days; d++) {
+        const today = d === now.getDate() && m === now.getMonth() && y === now.getFullYear();
+        h += `<span class="${today ? 'on' : ''}">${d}</span>`;
+      }
+      el.innerHTML = h + '</div>';
+    },
+    key(k) {
+      if (k === 'left' || k === '4') { m--; if (m < 0) { m = 11; y--; } }
+      else if (k === 'right' || k === '6') { m++; if (m > 11) { m = 0; y++; } }
+      else if (k === 'up' || k === '2') y--;
+      else if (k === 'down' || k === '8') y++;
+      else return;
+      render();
+    },
+    softL: ['Сегодня', () => { const n = new Date(); y = n.getFullYear(); m = n.getMonth(); render(); }],
+    softR: ['Назад', pop],
+  };
+  return s;
+}
+
+// ---------- калькулятор
+function calcApp() {
+  const OPS = ['+', '−', '×', '÷'];
+  let a = '', op = '', b = '', fresh = false;
+  const clear = () => { a = ''; op = ''; b = ''; fresh = false; };
+  function eq() {
+    if (!op || b === '') return;
+    const x = parseFloat(a || '0'), y = parseFloat(b);
+    const r = op === '+' ? x + y : op === '−' ? x - y : op === '×' ? x * y : (y === 0 ? NaN : x / y);
+    a = isFinite(r) ? String(+r.toPrecision(10)) : 'Ошибка';
+    op = ''; b = ''; fresh = true;
+  }
+  const s = {
+    title: 'Калькулятор',
+    draw(el) {
+      el.innerHTML = `<div class="calc"><div class="expr">${esc(op ? a + ' ' + op : '')}</div><div class="num">${esc(op ? (b || '0') : (a || '0'))}</div><div class="hint">цифры — ввод · # точка · * действие (+ − × ÷) · OK = · ◀ стереть</div></div>`;
+    },
+    key(k) {
+      if (a === 'Ошибка') clear();
+      if (/^[0-9]$/.test(k)) {
+        if (fresh && !op) { a = ''; fresh = false; }
+        if (op) b = (b + k).slice(0, 12); else a = (a + k).slice(0, 12);
+      } else if (k === '#') {
+        if (fresh && !op) { a = ''; fresh = false; }
+        const t = op ? b : a;
+        if (!t.includes('.')) { if (op) b = (b || '0') + '.'; else a = (a || '0') + '.'; }
+      } else if (k === '*') {
+        fresh = false;
+        if (a === '') a = '0';
+        if (!op) op = '+';
+        else if (b === '') op = OPS[(OPS.indexOf(op) + 1) % 4];
+        else { eq(); fresh = false; op = '+'; }
+      } else if (k === 'ok') eq();
+      else if (k === 'left') { if (op && b) b = b.slice(0, -1); else if (op) op = ''; else a = a.slice(0, -1); }
+      else return;
+      render();
+    },
+    softL: ['C', () => { clear(); render(); }],
+    softR: ['Назад', pop],
+  };
+  return s;
+}
+
+// ---------- ГИД
+function guide() {
+  return {
+    title: 'ГИД',
+    draw(el) {
+      if (!me) { el.innerHTML = '<div class="empty">Нет данных</div>'; return; }
+      const p = me.phone, pq = p.photoQ;
+      const work = me.work_left > 0 ? `через ${Math.floor(me.work_left / 3600)} ч ${Math.ceil((me.work_left % 3600) / 60)} мин` : 'можно идти сейчас';
+      el.innerHTML = `<div class="txt">
+        <p>📞 <b>Номер:</b><br>${esc(me.number)}</p>
+        <p>💰 <b>Баланс:</b> ${me.balance} ₽</p>
+        <p>📱 <b>Телефон:</b> ${esc(p.name)}<br>Память: ${p.used}/${p.mem} файлов</p>
+        <p>🖼 Фото: ${pq.w}×${pq.h}, ${Math.pow(pq.levels, 3)} цветов<br>
+        🎵 Музыка: ${p.musicCut <= 1200 ? 'как из трубки' : p.musicCut <= 2500 ? 'глуховатая' : 'почище'}<br>
+        🎬 Видео: ${p.videoQ ? p.videoQ.w + '×' + p.videoQ.h + ', ' + p.videoQ.fps + ' кадр/с' : 'нет'}<br>
+        🌄 Свои обои: ${p.wall ? 'да' : 'нет'}<br>
+        🎮 Свои игры: ${p.games ? 'до ' + p.games : 'нет'}</p>
+        <p>🏭 <b>Завод:</b> ${work}</p>
+        <p><b>Как пользоваться:</b><br>Рубли, магазин телефонов и загрузка файлов — в чате с ботом. Фото, музыка и видео смотрятся в приложениях Галерея и Музыка.</p>
+      </div>`;
+    },
+    onEnter() { loadMe().then(() => { if (cur === this) render(); }); },
+    key(k) { const el = $('#lcd'); if (k === 'up' || k === '2') el.scrollTop -= 40; else if (k === 'down' || k === '8') el.scrollTop += 40; },
+    softL: null, softR: ['Назад', pop],
+  };
+}
+
 // ---------- рекорды и настройки
 function records() {
   const s = listScreen({title: 'Рекорды', items: [], empty: 'Загрузка…'});
   s.onEnter = async () => {
     try {
-      const [a, b] = await Promise.all([api('/api/top?game=snake'), api('/api/top?game=ttt')]);
+      const [a, b, c] = await Promise.all([api('/api/top?game=snake'), api('/api/top?game=ttt'), api('/api/top?game=brick')]);
       const items = [{label: '— 🐍 Змейка —'}];
       a.forEach((r, i) => items.push({label: `${i + 1}. ${r.name}`, sub: `${r.best} очк.`}));
+      items.push({label: '— 🧱 Арканоид —'});
+      c.forEach((r, i) => items.push({label: `${i + 1}. ${r.name}`, sub: `${r.best} очк.`}));
       items.push({label: '— ❌ Победы в крестики —'});
       b.forEach((r, i) => items.push({label: `${i + 1}. ${r.name}`, sub: `${r.best} побед`}));
       s.items = items;
@@ -479,6 +977,7 @@ function settingsScr() {
     s.items = [
       {label: 'Вибрация: ' + (settings.vib ? 'вкл' : 'выкл'), fn: () => { settings.vib = !settings.vib; saveSettings(); build(); render(); }},
       {label: 'Тема: ' + THEMES[settings.theme].n, fn: () => { settings.theme = (settings.theme + 1) % THEMES.length; saveSettings(); applyTheme(); build(); render(); }},
+      {label: 'Телефон: ' + P().name, sub: 'менять в чате с ботом'},
     ];
   };
   build();
@@ -489,7 +988,9 @@ function settingsScr() {
 document.querySelectorAll('[data-k]').forEach(b => b.addEventListener('click', () => press(b.dataset.k)));
 const KEYMAP = {ArrowUp: 'up', ArrowDown: 'down', ArrowLeft: 'left', ArrowRight: 'right', Enter: 'ok', Backspace: 'sr', Escape: 'end'};
 document.addEventListener('keydown', e => {
-  if (document.activeElement && document.activeElement.tagName === 'TEXTAREA') return;
+  if (cur && cur.typeChar && e.key.length === 1 && !/[0-9*#]/.test(e.key) && !e.ctrlKey && !e.metaKey) {
+    e.preventDefault(); cur.typeChar(e.key); return;
+  }
   const k = KEYMAP[e.key] || (/^[0-9*#]$/.test(e.key) ? e.key : null);
   if (k) { e.preventDefault(); press(k); }
 });
@@ -497,4 +998,4 @@ document.addEventListener('keydown', e => {
 show(home);
 </script>
 </body>
-</html>
+  </html>
